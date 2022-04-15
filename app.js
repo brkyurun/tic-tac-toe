@@ -18,53 +18,19 @@ const gameBoard = (function () {
   return { getArea, setArea, reset };
 })();
 
-const displayController = (function () {
-  const tiles = [...document.querySelectorAll(".game-area")];
-  const restart = document.querySelector("#resetGame");
-  const messageArea = document.querySelector(".winner-announcement");
-
-  for (let tile of tiles) {
-    tile.addEventListener("click", (element) => {
-      if (gameController.isGameOver() || element.target.textContent !== "") {
-        return;
-      }
-      gameController.playRound(Number(element.target.dataset.index));
-      render();
-    });
-  }
-
-  restart.addEventListener("click", () => {
-    gameBoard.reset();
-    gameController.reset();
-    render();
-    changeMessageArea("Player X's turn");
-  });
-
-  function render() {
-    for (let i = 0; i < tiles.length; i++) {
-      tiles[i].textContent = gameBoard.getArea(i);
-    }
-  }
-
-  function changeMessageArea(text) {
-    messageArea.textContent = text;
-  }
-
-  function showWinner(winner) {
-    if (winner === "tie") {
-      changeMessageArea("It's a tie.");
-    } else {
-      changeMessageArea(`${winner} wins!`);
-    }
-  }
-  return { changeMessageArea, showWinner };
-})();
-
 const gameController = (function () {
   const playerX = Player("X", prompt("First player: ", "Player X"));
   const playerO = Player("O", prompt("Second player: ", "Player O"));
   let round = 1;
   let roundOver = false;
+
+  function getPlayerName(name) {
+    if (name === "X") {
+      return playerX.name;
+    } else if (name === "O") {
+      return playerO.name;
+    }
+  }
 
   function playRound(index) {
     gameBoard.setArea(index, getCurrentSign());
@@ -78,7 +44,9 @@ const gameController = (function () {
       return;
     }
     round++;
-    displayController.changeMessageArea(`${getCurrentSign()}'s turn`);
+    displayController.changeMessageArea(
+      `${gameController.getPlayerName(getCurrentSign())}'s turn`
+    );
   }
 
   function getCurrentSign() {
@@ -115,7 +83,60 @@ const gameController = (function () {
     roundOver = false;
   }
 
-  return { playRound, isGameOver, reset };
+  return { getPlayerName, playRound, isGameOver, reset };
+})();
+
+const displayController = (function () {
+  const tiles = [...document.querySelectorAll(".game-area")];
+  const restart = document.querySelector("#resetGame");
+  const messageArea = document.querySelector(".winner-announcement");
+  const playerNames = document.querySelector(".player-names");
+
+  for (let tile of tiles) {
+    tile.addEventListener("click", (element) => {
+      if (gameController.isGameOver() || element.target.textContent !== "") {
+        return;
+      }
+      gameController.playRound(Number(element.target.dataset.index));
+      render();
+    });
+  }
+
+  restart.addEventListener("click", () => {
+    gameBoard.reset();
+    gameController.reset();
+    render();
+    changeMessageArea(`${gameController.getPlayerName("X")}'s turn`);
+  });
+
+  function _setPlayerNames() {
+    playerNames.textContent = `${gameController.getPlayerName(
+      "X"
+    )} vs ${gameController.getPlayerName("O")}`;
+  }
+
+  function render() {
+    for (let i = 0; i < tiles.length; i++) {
+      tiles[i].textContent = gameBoard.getArea(i);
+    }
+  }
+
+  function changeMessageArea(text) {
+    messageArea.textContent = text;
+  }
+
+  function showWinner(winner) {
+    if (winner === "tie") {
+      changeMessageArea("It's a tie.");
+    } else if (winner === "X") {
+      changeMessageArea(`${gameController.getPlayerName("X")} wins!`);
+    } else if (winner === "O") {
+      changeMessageArea(`${gameController.getPlayerName("O")} wins!`);
+    }
+  }
+
+  _setPlayerNames();
+  return { changeMessageArea, showWinner };
 })();
 
 function Player(sign, name) {
